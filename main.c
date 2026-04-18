@@ -53,6 +53,7 @@ void sendData(int *sock, const char *file) {
   FILE *html = fopen(file, "rb");
   if (!html) {
     perror("failed to open file");
+    send(*sock, "HTTP/1.1 404 Not Found", strlen("HTTP/1.1 404 Not Found"), 0);
     return;
   }
 
