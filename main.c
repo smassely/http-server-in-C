@@ -94,9 +94,6 @@ void *handleClient(void *arg) {
     char *page = getRoutes(token);
     sendData(clientSocket, page);
   }
-  if (strcmp(req.method, "POST") == 0) {
-  }
-
   close(*clientSocket);
   free(clientSocket);
 
