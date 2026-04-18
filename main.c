@@ -40,7 +40,7 @@ req_info tokenize(char *recv) {
   return req;
 }
 
-char *route(const char *route) {
+char *getRoutes(const char *route) {
   if (strcmp(route, "/") == 0) {
     return "static/file.html";
   }
@@ -48,6 +48,8 @@ char *route(const char *route) {
   snprintf(path, sizeof(path), "static%s", route);
   return path;
 }
+
+char *postRoutes(const char *route);
 
 void sendData(int *sock, const char *file) {
   FILE *html = fopen(file, "rb");
@@ -85,11 +87,16 @@ void *handleClient(void *arg) {
 
   req_info req = tokenize(recvBuf);
 
-  char *token = (char *)req.route;
   printf("%s, %s\n", req.method, req.route);
-  char *page = route(token);
+  char *token = req.route;
 
-  sendData(clientSocket, page);
+  if (strcmp(req.method, "GET") == 0) {
+    char *page = getRoutes(token);
+    sendData(clientSocket, page);
+  }
+  if (strcmp(req.method, "POST") == 0) {
+  }
+
   close(*clientSocket);
   free(clientSocket);
 
