@@ -14,27 +14,7 @@
 
 #define MSGS_PATH "db/messages.txt"
 #define SEND_RESPONSE "HTTP/1.1 200 OK\r\n\r\nsending"
-char *find_last_line(const char *str) {
-  if (str == NULL)
-    return NULL;
 
-  char *copy = strdup(str);
-  if (copy == NULL)
-    return NULL;
-
-  char *last_line = NULL;
-  char *token = strtok(copy, "\n");
-
-  while (token != NULL) {
-    last_line = token;
-    token = strtok(NULL, "\n");
-  }
-
-  char *result = last_line ? strdup(last_line) : NULL;
-
-  free(copy);
-  return result;
-}
 typedef struct {
   char *method;
   char *route;
