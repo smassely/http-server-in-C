@@ -1,3 +1,4 @@
+#include "include/arrays.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -12,7 +13,28 @@
 #define BUF_SIZE 1024
 
 #define MSGS_PATH "db/messages.txt"
+#define SEND_RESPONSE "HTTP/1.1 200 OK\r\n\r\nsending"
+char *find_last_line(const char *str) {
+  if (str == NULL)
+    return NULL;
 
+  char *copy = strdup(str);
+  if (copy == NULL)
+    return NULL;
+
+  char *last_line = NULL;
+  char *token = strtok(copy, "\n");
+
+  while (token != NULL) {
+    last_line = token;
+    token = strtok(NULL, "\n");
+  }
+
+  char *result = last_line ? strdup(last_line) : NULL;
+
+  free(copy);
+  return result;
+}
 typedef struct {
   char *method;
   char *route;
@@ -45,21 +67,17 @@ req_info tokenize(char *recv) {
 char *route(const char *route, const char *method) {
   if (strcmp(method, "GET") == 0) {
     if (strcmp(route, "/") == 0) {
-      return "static/file.html";
+      return "static/index.html";
     }
     static char path[256];
     snprintf(path, sizeof(path), "static%s", route);
     return path;
   }
   if (strcmp(method, "POST") == 0) {
-    if (strcmp(route, "/api")) {
-      FILE *db = fopen(MSGS_PATH, "wb");
-      fprintf(db, "message\n");
-      fclose(db);
-      return "HTTP/1.1 200 OK\r\n  response";
+    if (strcmp(route, "/send") == 0) {
+      return SEND_RESPONSE;
     }
   }
-
   return "HTTP/1.1 404 Not Found";
 }
 void updateMessages();
@@ -95,24 +113,30 @@ void sendData(int *sock, char *method, const char *file) {
       send(*sock, buffer, read, 0);
     }
     fclose(html);
-  } else if (strcmp(method, "POST")) {
-    send(*sock, file, strlen(file), 0);
   }
 }
 
-void *handleClient(void *arg) {
-  int *clientSocket = (int *)arg;
+void *handleClient(void *sock) {
+  int *clientSocket = (int *)sock;
 
   char recvBuf[BUF_SIZE] = {0};
 
   recv(*clientSocket, recvBuf, BUF_SIZE, 0);
+  char *last_line = strrchr(recvBuf, '\n');
 
   req_info req = tokenize(recvBuf);
 
   printf("%s, %s\n", req.method, req.route);
+
   char *token = req.route;
 
   char *response = route(req.route, req.method);
+
+  if (strcmp(response, SEND_RESPONSE) == 0) {
+    FILE *db = fopen(MSGS_PATH, "a");
+    fprintf(db, "%s\n", last_line);
+    fclose(db);
+  }
 
   sendData(clientSocket, req.method, response);
 
