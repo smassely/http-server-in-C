@@ -11,6 +11,8 @@
 #define PORT 3030
 #define BUF_SIZE 1024
 
+#define MSGS_PATH "db/messages.txt"
+
 typedef struct {
   char *method;
   char *route;
@@ -40,42 +42,62 @@ req_info tokenize(char *recv) {
   return req;
 }
 
-char *getRoutes(const char *route) {
-  if (strcmp(route, "/") == 0) {
-    return "static/file.html";
+char *route(const char *route, const char *method) {
+  if (strcmp(method, "GET") == 0) {
+    if (strcmp(route, "/") == 0) {
+      return "static/file.html";
+    }
+    static char path[256];
+    snprintf(path, sizeof(path), "static%s", route);
+    return path;
   }
-  static char path[256];
-  snprintf(path, sizeof(path), "static%s", route);
-  return path;
+  if (strcmp(method, "POST") == 0) {
+    if (strcmp(route, "/api")) {
+      FILE *db = fopen(MSGS_PATH, "wb");
+      fprintf(db, "message\n");
+      fclose(db);
+      return "HTTP/1.1 200 OK\r\n  response";
+    }
+  }
+
+  return "HTTP/1.1 404 Not Found";
 }
+void updateMessages();
 
-char *postRoutes(const char *route);
+void sendData(int *sock, char *method, const char *file) {
+  if (strcmp(method, "GET") == 0) {
+    if (file == NULL)
+      return;
 
-void sendData(int *sock, const char *file) {
-  FILE *html = fopen(file, "rb");
-  if (!html) {
-    perror("failed to open file");
-    send(*sock, "HTTP/1.1 404 Not Found", strlen("HTTP/1.1 404 Not Found"), 0);
-    return;
+    FILE *html = fopen(file, "rb");
+    if (!html) {
+      perror("failed to open file");
+      send(*sock, "HTTP/1.1 404 Not Found", strlen("HTTP/1.1 404 Not Found"),
+           0);
+      return;
+    }
+
+    fseek(html, 0, SEEK_END);
+    long fileSize = ftell(html);
+    rewind(html);
+
+    char buffer[BUF_SIZE] = {0};
+    size_t read = 0;
+
+    char header[256];
+    snprintf(
+        header, sizeof(header),
+        "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n",
+        getContentType(file), fileSize);
+    send(*sock, header, strlen(header), 0);
+
+    while ((read = fread(buffer, sizeof(buffer[0]), BUF_SIZE, html)) > 0) {
+      send(*sock, buffer, read, 0);
+    }
+    fclose(html);
+  } else if (strcmp(method, "POST")) {
+    send(*sock, file, strlen(file), 0);
   }
-
-  fseek(html, 0, SEEK_END);
-  long fileSize = ftell(html);
-  rewind(html);
-
-  char buffer[BUF_SIZE] = {0};
-  size_t read = 0;
-
-  char header[256];
-  snprintf(header, sizeof(header),
-           "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %ld\r\n\r\n",
-           getContentType(file), fileSize);
-  send(*sock, header, strlen(header), 0);
-
-  while ((read = fread(buffer, sizeof(buffer[0]), BUF_SIZE, html)) > 0) {
-    send(*sock, buffer, read, 0);
-  }
-  fclose(html);
 }
 
 void *handleClient(void *arg) {
@@ -90,10 +112,10 @@ void *handleClient(void *arg) {
   printf("%s, %s\n", req.method, req.route);
   char *token = req.route;
 
-  if (strcmp(req.method, "GET") == 0) {
-    char *page = getRoutes(token);
-    sendData(clientSocket, page);
-  }
+  char *response = route(req.route, req.method);
+
+  sendData(clientSocket, req.method, response);
+
   close(*clientSocket);
   free(clientSocket);
 
