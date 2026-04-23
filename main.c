@@ -13,6 +13,7 @@
 #define BUF_SIZE 1024
 
 #define MSGS_PATH "db/messages.txt"
+
 #define SEND_RESPONSE "HTTP/1.1 200 OK\r\n\r\nsending"
 #define DELETE_RESPONSE "HTTP/1.1 200 OK\r\n\r\ndeleting"
 
