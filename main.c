@@ -33,7 +33,10 @@ const char *getContentType(const char *path) {
     return "image/jpeg";
   if (strstr(path, ".json"))
     return "application/json";
-  return "text/html";
+  if (strstr(path, ".html"))
+    return "text/html";
+
+  return "text/plain";
 }
 
 req_info tokenize(char *recv) {
@@ -48,6 +51,9 @@ char *route(const char *route, const char *method) {
   if (strcmp(method, "GET") == 0) {
     if (strcmp(route, "/") == 0) {
       return "static/index.html";
+    }
+    if (strcmp(route, "/jacks") == 0) {
+      return "static/jacks.html";
     }
     static char path[256];
     snprintf(path, sizeof(path), "static%s", route);
@@ -102,7 +108,7 @@ void *handleClient(void *sock) {
   char recvBuf[BUF_SIZE] = {0};
 
   recv(*clientSocket, recvBuf, BUF_SIZE, 0);
-  char *last_line = strrchr(recvBuf, '\n');
+  char *last_line = strrchr(recvBuf, '\n') + 1;
 
   req_info req = tokenize(recvBuf);
 
