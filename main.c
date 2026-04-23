@@ -14,6 +14,7 @@
 
 #define MSGS_PATH "db/messages.txt"
 #define SEND_RESPONSE "HTTP/1.1 200 OK\r\n\r\nsending"
+#define DELETE_RESPONSE "HTTP/1.1 200 OK\r\n\r\ndeleting"
 
 typedef struct {
   char *method;
@@ -49,20 +50,22 @@ req_info tokenize(char *recv) {
 
 char *route(const char *route, const char *method) {
   if (strcmp(method, "GET") == 0) {
-    if (strcmp(route, "/") == 0) {
+    if (strcmp(route, "/") == 0)
       return "static/index.html";
-    }
-    if (strcmp(route, "/jacks") == 0) {
+
+    if (strcmp(route, "/jacks") == 0)
       return "static/jacks.html";
-    }
+
     static char path[256];
     snprintf(path, sizeof(path), "static%s", route);
     return path;
   }
   if (strcmp(method, "POST") == 0) {
-    if (strcmp(route, "/send") == 0) {
+    if (strcmp(route, "/send") == 0)
       return SEND_RESPONSE;
-    }
+
+    if (strcmp(route, "/delete") == 0)
+      return DELETE_RESPONSE;
   }
   return "HTTP/1.1 404 Not Found";
 }
@@ -110,9 +113,8 @@ void *handleClient(void *sock) {
   recv(*clientSocket, recvBuf, BUF_SIZE, 0);
 
   char *body = strstr(recvBuf, "\r\n\r\n");
-  if (body) {
+  if (body)
     body += 4;
-  }
 
   req_info req = tokenize(recvBuf);
   if (!req.method || !req.method) {
@@ -126,6 +128,11 @@ void *handleClient(void *sock) {
   char *response = route(req.route, req.method);
 
   if (strcmp(response, SEND_RESPONSE) == 0 && body) {
+    FILE *db = fopen(MSGS_PATH, "a");
+    fprintf(db, "%s\n", body);
+    fclose(db);
+  }
+  if (strcmp(response, DELETE_RESPONSE) == 0) {
     FILE *db = fopen(MSGS_PATH, "a");
     fprintf(db, "%s\n", body);
     fclose(db);
