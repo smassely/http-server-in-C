@@ -108,9 +108,16 @@ void *handleClient(void *sock) {
   char recvBuf[BUF_SIZE] = {0};
 
   recv(*clientSocket, recvBuf, BUF_SIZE, 0);
-  char *last_line = strrchr(recvBuf, '\n') + 1;
+
+  char *body = strstr(recvBuf, "\r\n\r\n");
+  if (body) {
+    body += 4;
+  }
 
   req_info req = tokenize(recvBuf);
+  if (!req.method || !req.method) {
+    return NULL;
+  }
 
   printf("%s, %s\n", req.method, req.route);
 
@@ -118,9 +125,9 @@ void *handleClient(void *sock) {
 
   char *response = route(req.route, req.method);
 
-  if (strcmp(response, SEND_RESPONSE) == 0) {
+  if (strcmp(response, SEND_RESPONSE) == 0 && body) {
     FILE *db = fopen(MSGS_PATH, "a");
-    fprintf(db, "%s\n", last_line);
+    fprintf(db, "%s\n", body);
     fclose(db);
   }
 
