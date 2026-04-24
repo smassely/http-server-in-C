@@ -7,9 +7,9 @@ send.addEventListener('click', async () => {
   let data = message.value
   let response = await fetch("/send", {
     method: 'POST', headers: {
-      'Content-type': 'text/plain'
+      'Content-type': 'application/json'
     },
-    body: data
+    body: JSON.stringify({message: data})
   })
   console.log("log");
   console.log(response);
@@ -20,9 +20,9 @@ message.addEventListener('keydown', async (e) => {
     let data = message.value
     let response = await fetch("/send", {
       method: 'POST', headers: {
-        'Content-type': 'text/plain'
+        'Content-type': 'application/json'
       },
-      body: data
+      body: {message : data}
     })
     console.log("log");
     console.log(response);

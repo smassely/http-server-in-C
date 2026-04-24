@@ -105,6 +105,9 @@ void sendData(int *sock, char *method, const char *file) {
     }
     fclose(html);
   }
+  if (strcmp(method, "POST") == 0) {
+    send(*sock, file, sizeof(file), 0);
+  }
 }
 
 void *handleClient(void *sock) {
@@ -131,8 +134,15 @@ void *handleClient(void *sock) {
 
   if (strcmp(response, SEND_RESPONSE) == 0 && body) {
     FILE *db = fopen(MSGS_PATH, "a");
-    fprintf(db, "%s\n", body);
+
+    cJSON *root = cJSON_Parse(body);
+    if (!root) {
+      return NULL; 
+    }
+    const char* message = cJSON_GetObjectItemCaseSensitive(root, "message")->valuestring;
+    fprintf(db, "%s\n", message);
     fclose(db);
+    sendData(clientSocket, req.method, SEND_RESPONSE);
   }
   if (strcmp(response, DELETE_RESPONSE) == 0) {
     FILE *db = fopen(MSGS_PATH, "a");
