@@ -1,5 +1,6 @@
 #include "include/arrays.h"
 #include <arpa/inet.h>
+#include <cjson/cJSON.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <stddef.h>
