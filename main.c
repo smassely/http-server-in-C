@@ -136,6 +136,7 @@ void *handleClient(void *sock) {
     FILE *db = fopen(MSGS_PATH, "a");
 
     cJSON *root = cJSON_Parse(body);
+    
     if (!root) {
       return NULL; 
     }
