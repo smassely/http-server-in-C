@@ -133,24 +133,15 @@ void *handleClient(void *sock) {
   char *response = route(req.route, req.method);
 
   if (strcmp(response, SEND_RESPONSE) == 0 && body) {
-    FILE *db = fopen(MSGS_PATH, "a");
-
     cJSON *root = cJSON_Parse(body);
-    
-    if (!root) {
-      return NULL; 
-    }
+    if (!root) return NULL; 
     const char* message = cJSON_GetObjectItemCaseSensitive(root, "message")->valuestring;
+    FILE *db = fopen(MSGS_PATH, "a");
+    if(!db) return NULL;
     fprintf(db, "%s\n", message);
     fclose(db);
     sendData(clientSocket, req.method, SEND_RESPONSE);
   }
-  if (strcmp(response, DELETE_RESPONSE) == 0) {
-    FILE *db = fopen(MSGS_PATH, "a");
-    fprintf(db, "%s\n", body);
-    fclose(db);
-  }
-
   sendData(clientSocket, req.method, response);
 
   close(*clientSocket);
