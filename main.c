@@ -38,7 +38,6 @@ const char *getContentType(const char *path) {
     return "application/json";
   if (strstr(path, ".html"))
     return "text/html";
-
   return "text/plain";
 }
 
@@ -71,7 +70,6 @@ char *route(const char *route, const char *method) {
   }
   return "HTTP/1.1 404 Not Found";
 }
-void updateMessages();
 
 void sendData(int *sock, char *method, const char *file) {
   if (strcmp(method, "GET") == 0) {
@@ -81,8 +79,7 @@ void sendData(int *sock, char *method, const char *file) {
     FILE *html = fopen(file, "rb");
     if (!html) {
       perror("failed to open file");
-      send(*sock, "HTTP/1.1 404 Not Found", strlen("HTTP/1.1 404 Not Found"),
-           0);
+      send(*sock, "HTTP/1.1 404 Not Found", strlen("HTTP/1.1 404 Not Found"), 0);
       return;
     }
 
@@ -183,8 +180,7 @@ int main() {
     socklen_t clientLen = sizeof(clientAddr);
     int *clientSocket = malloc(sizeof(int));
 
-    if ((*clientSocket = accept(serverSock, (struct sockaddr *)&clientAddr,
-                                &clientLen)) < 0) {
+    if ((*clientSocket = accept(serverSock, (struct sockaddr *)&clientAddr, &clientLen)) < 0) {
       perror("couldnt accept client connection");
       continue;
     }

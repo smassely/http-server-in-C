@@ -22,7 +22,7 @@ message.addEventListener('keydown', async (e) => {
       method: 'POST', headers: {
         'Content-type': 'application/json'
       },
-      body: {message : data}
+      body: JSON.stringify({message : data})
     })
     console.log("log");
     console.log(response);
